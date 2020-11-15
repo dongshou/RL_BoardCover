@@ -80,7 +80,7 @@ class MyEnv(gym.Env):
         if self.state[x][y] ==0:
             obs =self.get_observation(x,y)  # 获取观测值
             if action ==0:
-                reward =0.1
+                reward =-0.1
             if action ==1:
                 if obs[1] ==0 and obs[3] ==0:
                     self.state[x][y] =1
