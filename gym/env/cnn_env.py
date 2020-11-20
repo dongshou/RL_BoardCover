@@ -17,17 +17,16 @@ class MyEnv(gym.Env):
         super(MyEnv,self).__init__()
         self.size = size  #棋盘大小
         self.edege_size = 512
-        self.loc =[0,0]
         self.target = np.ones(shape=[self.size,self.size])
         # self.state = self.init_state()
-        self.action_space = spaces.Box(low=np.array([0,0,1]),high=np.array([self.size,self.size,4]),dtype=np.float64)  # 动作空间,离散0：不动作，。。。。
-        self.observation_space = spaces.Box(low=-1,high=1,shape=(self.size,self.size,1),dtype=np.float64) # 状态空间
-        print(self.observation_space.shape)
+        self.action_space = spaces.Box(low=np.array([-1,-1,0]),high=np.array([1,1,4.99]),dtype=np.float64)  # 动作空间,离散0：不动作，。。。。
+        self.observation_space = spaces.Box(low=0,high=1,shape=(self.size,self.size,1),dtype=np.float64) # 状态空间
         self.viewer = rendering.Viewer(self.edege_size+30,self.edege_size+30)
 
     def init_state(self):
         state = np.zeros(shape=(self.size,self.size,1))
         x,y = random.randint(0,self.size-1),random.randint(0,self.size-1)
+        self.loc = [x,y]
         state[x][y][0] = 1
         return state
 
@@ -37,7 +36,6 @@ class MyEnv(gym.Env):
         :return:
         """
         self.state = self.init_state()
-        self.loc=[0,0]
         self.done = False
         obs = self.get_observation()
         return obs
@@ -59,15 +57,18 @@ class MyEnv(gym.Env):
         :return:
         """
         reward = 0
-        x = int(action[0])
-        y = int(action[1])
-        self.loc = [x,y]
-        act = int(action[2])
-        reward = self.update(x,y,act)
-        reward += -0.3
+        x = self.loc[0]+int(action[0])
+        y = self.loc[1]+int(action[1])
+        if x<self.size and x>0 and y<self.size and y>0:
+            self.loc = [x,y]
+            act = int(action[2])
+            reward = self.update(x,y,act)
+        else:
+            reward = -0.5
+        reward += -0.1
         if  (self.state==self.target).all():
             reward = 100
-        print("(x,y):",self.loc,"action:",act)
+        # print("(x,y):",self.loc,"action:",act)
         return self.state,reward,self.done,{}
 
 
@@ -80,39 +81,52 @@ class MyEnv(gym.Env):
         :return:
         """
         reward =0
-        if action ==1:
-           if self.state[x][y][0]  ==0 and self.state[x-1][y][0] ==0 and self.state[x][y-1][0] ==0:
-               self.state[x][y][0]  = 1
-               self.state[x-1][y][0] = 1
-               self.state[x][y-1][0]  = 1
-               reward = 1
-           else:
-               reward = -1
-        elif action ==2:
-            if  self.state[x][y][0]  ==0 and  self.state[x-1][y][0]  ==0 and  self.state[x][y+1][0]  ==0:
-                self.state[x][y][0]  =1
-                self.state[x-1][y][0]  =1
-                self.state[x][y+1][0]  =1
-                reward =1
+        if action ==0:
+            reward = -0.5
+        elif action ==1:
+            if x-1>0 and y-1>0:
+               if self.state[x][y][0]  ==0 and self.state[x-1][y][0] ==0 and self.state[x][y-1][0] ==0:
+                   self.state[x][y][0]  = 1
+                   self.state[x-1][y][0] = 1
+                   self.state[x][y-1][0]  = 1
+                   reward = 1
+               else:
+                   reward = -1
             else:
-                reward =-1
+                reward = -1
+        elif action ==2:
+            if x-1>0 and y+1<self.size:
+                if  self.state[x][y][0]  ==0 and  self.state[x-1][y][0]  ==0 and  self.state[x][y+1][0]  ==0:
+                    self.state[x][y][0]  =1
+                    self.state[x-1][y][0]  =1
+                    self.state[x][y+1][0]  =1
+                    reward =1
+                else:
+                    reward =-1
+            else:
+                reward = -1
         elif action==3:
-            if  self.state[x][y][0]  ==0 and  self.state[x][y-1][0]  ==0 and  self.state[x+1][y][0]  ==0:
-                self.state[x][y][0]  =1
-                self.state[x][y-1][0]  =1
-                self.state[x+1][y][0]  =1
-                reward = 1
+            if y-1>0 and x+1<self.size:
+                if  self.state[x][y][0]  ==0 and  self.state[x][y-1][0]  ==0 and  self.state[x+1][y][0]  ==0:
+                    self.state[x][y][0]  =1
+                    self.state[x][y-1][0]  =1
+                    self.state[x+1][y][0]  =1
+                    reward = 1
+                else:
+                    reward = -1
             else:
                 reward = -1
         elif action ==4:
-            if  self.state[x][y][0]  ==0 and  self.state[x+1][y][0]  ==0 and  self.state[x][y+1][0]  ==0:
-                self.state[x][y][0]  =1
-                self.state[x][y+1][0]  =1
-                self.state[x+1][y][0]  =1
-                reward =1
+            if x+1<self.size and y+1<self.size:
+                if  self.state[x][y][0]  ==0 and  self.state[x+1][y][0]  ==0 and  self.state[x][y+1][0]  ==0:
+                    self.state[x][y][0]  =1
+                    self.state[x][y+1][0]  =1
+                    self.state[x+1][y][0]  =1
+                    reward =1
+                else:
+                    reward = -1
             else:
                 reward = -1
-
         return reward
 
 

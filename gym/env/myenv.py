@@ -7,6 +7,7 @@
 """
 import time
 
+import math
 import numpy as np
 import random
 import gym
@@ -20,11 +21,12 @@ class MyEnv(gym.Env):
         self.size = size  #棋盘大小
         self.edege_size = 512
         self.loc =[0,0]
-        self.target = np.ones(shape=[self.size,self.size,1])
+        self.target = np.ones(shape=[self.size,self.size])
         # self.state = self.init_state()
-        self.action_space = spaces.Box(low=0,high=4,shape=(1,),dtype=np.float64)  # 动作空间,离散0：不动作，。。。。
+        self.action_space = spaces.Box(low=0,high=4.999,shape=(1,),dtype=np.float64)  # 动作空间,离散0：不动作，。。。。
         self.observation_space = spaces.Box(low=0,high=1,shape=(self.size*self.size,),dtype=np.float64) # 状态空间
         self.viewer = rendering.Viewer(self.edege_size+30,self.edege_size+30)
+        self.reward = 0
 
     def init_state(self):
         state = np.zeros(shape=(self.size,self.size))
@@ -132,13 +134,16 @@ class MyEnv(gym.Env):
             else:
                 reward =-0.8
             self.update_loc()
-        if (self.state==self.target).all():
-            self.done = True
-            reward = 100
-        if self.done and not (self.state==self.target).all():
-            reward = -1
-        obs = self.get_observation(self.loc[0],self.loc[1])
-        reward += -0.1
+        # if (self.state==self.target).all():
+        #     self.done = True
+        #     reward = 100
+        # if self.done and not (self.state==self.target).all():
+        #     reward = -1
+        # obs = self.get_observation(self.loc[0],self.loc[1])
+        _r = self._reward()
+        reward = _r-self.reward
+        self.reward = _r
+        reward += -0.01
         # print("action:",action,"(x,y):",self.loc,"done:",self.done,"reward:",reward)
 
         return np.reshape(self.state,(-1,)),reward,self.done,{}
@@ -153,6 +158,22 @@ class MyEnv(gym.Env):
                 self.loc[1] = 0
         else:
             self.loc[1] +=1
+
+    def _reward(self):
+        """
+        通过self.state与E(2)的点乘实现卷积操作，从而实现reward的计算，stride=[1,2,2,1],padding = VALID
+        :return:
+        """
+        reward = np.zeros(shape = (int(self.size/2),int(self.size/2)))
+        i,j =0,0
+        while i<self.size:
+            j=0
+            while j<self.size:
+                reward[int(i/2)][int(j/2)] = math.floor(np.sum(self.state[i:i+2,j:j+2])/4)
+                j+=2
+            i+=2
+        _reward = int(np.sum(reward))
+        return _reward
 
 
     def render(self,mode="human",close=False):
@@ -197,12 +218,13 @@ class MyEnv(gym.Env):
             self.viewer.close()
 
 if __name__ == '__main__':
-    env = MyEnv(2)
+    env = MyEnv(8)
     env.reset()
     env.render()
     while True:
         act = input("action:")
         obs,reward,dones,info = env.step(act)
+        env._reward()
         print(reward,dones)
         env.render()
         if dones:
