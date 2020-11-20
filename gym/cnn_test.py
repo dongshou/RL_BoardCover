@@ -1,7 +1,7 @@
 from gym.wrappers import Monitor
 from stable_baselines.common.noise import OrnsteinUhlenbeckActionNoise
 
-from stable_baselines import DQN, DDPG
+from stable_baselines import DQN, DDPG,PPO2
 from stable_baselines.common.vec_env import DummyVecEnv
 from stable_baselines.ddpg.policies import MlpPolicy,CnnPolicy
 import numpy as np
@@ -20,7 +20,7 @@ def train(size):
     #
     model = DDPG(CnnPolicy, env, verbose=1, param_noise=param_noise, action_noise=action_noise)
     #
-    model.learn(total_timesteps=100)
+    model.learn(total_timesteps=10000)
     model.save("ddpg_mountain_{}_cnn".format(size))
     env.close()
     del env
@@ -35,13 +35,12 @@ def test(size):
     obs = env.reset()
     env.render()
     while True:
-        # action, _states = model.predict(obs)
-        action = input("action:")
+        action, _states = model.predict(obs)
+        # action = input("action:")
         print("action:",action)
         obs, rewards, dones, info = env.step(action)
         env.render(action)
-        time.sleep(0.5)
 
 if __name__ == '__main__':
-    # train(64)
+    train(64)
     test(64)

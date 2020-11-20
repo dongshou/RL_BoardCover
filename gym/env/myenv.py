@@ -5,6 +5,8 @@
 可能存在的问题：
 （1）可观测状态只有当前点的上下左右8个点，太少
 """
+import time
+
 import numpy as np
 import random
 import gym
@@ -18,7 +20,7 @@ class MyEnv(gym.Env):
         self.size = size  #棋盘大小
         self.edege_size = 512
         self.loc =[0,0]
-        self.target = np.ones(shape=[self.size,self.size])
+        self.target = np.ones(shape=[self.size,self.size,1])
         # self.state = self.init_state()
         self.action_space = spaces.Box(low=0,high=4,shape=(1,),dtype=np.float64)  # 动作空间,离散0：不动作，。。。。
         self.observation_space = spaces.Box(low=0,high=1,shape=(self.size*self.size,),dtype=np.float64) # 状态空间
@@ -195,5 +197,16 @@ class MyEnv(gym.Env):
             self.viewer.close()
 
 if __name__ == '__main__':
-    env = MyEnv(8)
+    env = MyEnv(2)
+    env.reset()
     env.render()
+    while True:
+        act = input("action:")
+        obs,reward,dones,info = env.step(act)
+        print(reward,dones)
+        env.render()
+        if dones:
+            env.reset()
+            time.sleep(1)
+            env.render()
+
