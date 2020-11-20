@@ -20,7 +20,7 @@ class MyEnv(gym.Env):
         self.loc =[0,0]
         self.target = np.ones(shape=[self.size,self.size])
         # self.state = self.init_state()
-        self.action_space = spaces.Box(low=0,high=4,shape=(1,),dtype=np.float64)  # 动作空间,离散0：不动作，。。。。
+        self.action_space = spaces.Box(low=0,high=4.99,shape=(1,),dtype=np.float64)  # 动作空间,离散0：不动作，。。。。
         self.observation_space = spaces.Box(low=0,high=1,shape=(self.size*self.size,),dtype=np.float64) # 状态空间
         self.viewer = rendering.Viewer(self.edege_size+30,self.edege_size+30)
 

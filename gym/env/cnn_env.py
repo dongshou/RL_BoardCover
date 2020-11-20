@@ -20,7 +20,7 @@ class MyEnv(gym.Env):
         self.loc =[0,0]
         self.target = np.ones(shape=[self.size,self.size])
         # self.state = self.init_state()
-        self.action_space = spaces.Box(low=np.array([0,0,1]),high=np.array([self.size,self.size,4]),dtype=np.float64)  # 动作空间,离散0：不动作，。。。。
+        self.action_space = spaces.Box(low=np.array([0,0,1]),high=np.array([self.size-0.1,self.size-0.1,4]),dtype=np.float64)  # 动作空间,离散0：不动作，。。。。
         self.observation_space = spaces.Box(low=-1,high=1,shape=(self.size,self.size,1),dtype=np.float64) # 状态空间
         print(self.observation_space.shape)
         self.viewer = rendering.Viewer(self.edege_size+30,self.edege_size+30)
@@ -67,7 +67,7 @@ class MyEnv(gym.Env):
         reward += -0.3
         if  (self.state==self.target).all():
             reward = 100
-        print("(x,y):",self.loc,"action:",act)
+        # print("(x,y):",self.loc,"action:",act)
         return self.state,reward,self.done,{}
 
 
@@ -81,35 +81,47 @@ class MyEnv(gym.Env):
         """
         reward =0
         if action ==1:
-           if self.state[x][y][0]  ==0 and self.state[x-1][y][0] ==0 and self.state[x][y-1][0] ==0:
-               self.state[x][y][0]  = 1
-               self.state[x-1][y][0] = 1
-               self.state[x][y-1][0]  = 1
-               reward = 1
-           else:
+            if x-1>=0 and y-1>=0:
+               if self.state[x][y][0]  ==0 and self.state[x-1][y][0] ==0 and self.state[x][y-1][0] ==0:
+                   self.state[x][y][0]  = 1
+                   self.state[x-1][y][0] = 1
+                   self.state[x][y-1][0]  = 1
+                   reward = 1
+               else:
+                   reward = 0.01
+            else:
                reward = -1
         elif action ==2:
-            if  self.state[x][y][0]  ==0 and  self.state[x-1][y][0]  ==0 and  self.state[x][y+1][0]  ==0:
-                self.state[x][y][0]  =1
-                self.state[x-1][y][0]  =1
-                self.state[x][y+1][0]  =1
-                reward =1
+            if x-1>=0 and y+1<self.size:
+                if  self.state[x][y][0]  ==0 and  self.state[x-1][y][0]  ==0 and  self.state[x][y+1][0]  ==0:
+                    self.state[x][y][0]  =1
+                    self.state[x-1][y][0]  =1
+                    self.state[x][y+1][0]  =1
+                    reward =1
+                else:
+                    reward = 0.01
             else:
                 reward =-1
         elif action==3:
-            if  self.state[x][y][0]  ==0 and  self.state[x][y-1][0]  ==0 and  self.state[x+1][y][0]  ==0:
-                self.state[x][y][0]  =1
-                self.state[x][y-1][0]  =1
-                self.state[x+1][y][0]  =1
-                reward = 1
+            if y-1>=0 and x+1<self.size:
+                if  self.state[x][y][0]  ==0 and  self.state[x][y-1][0]  ==0 and  self.state[x+1][y][0]  ==0:
+                    self.state[x][y][0]  =1
+                    self.state[x][y-1][0]  =1
+                    self.state[x+1][y][0]  =1
+                    reward = 1
+                else:
+                    reward = 0.01
             else:
                 reward = -1
         elif action ==4:
-            if  self.state[x][y][0]  ==0 and  self.state[x+1][y][0]  ==0 and  self.state[x][y+1][0]  ==0:
-                self.state[x][y][0]  =1
-                self.state[x][y+1][0]  =1
-                self.state[x+1][y][0]  =1
-                reward =1
+            if x+1<self.size and y+1<self.size:
+                if  self.state[x][y][0]  ==0 and  self.state[x+1][y][0]  ==0 and  self.state[x][y+1][0]  ==0:
+                    self.state[x][y][0]  =1
+                    self.state[x][y+1][0]  =1
+                    self.state[x+1][y][0]  =1
+                    reward =1
+                else:
+                    reward = 0.01
             else:
                 reward = -1
 
