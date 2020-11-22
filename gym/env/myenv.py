@@ -24,7 +24,7 @@ class MyEnv(gym.Env):
         self.target = np.ones(shape=[self.size,self.size])
         # self.state = self.init_state()
         self.action_space = spaces.Box(low=1,high=4.999,shape=(1,),dtype=np.float64)  # 动作空间,离散0：不动作，。。。。
-        self.observation_space = spaces.Box(low=0,high=1,shape=(self.size*self.size,),dtype=np.float64) # 状态空间
+        self.observation_space = spaces.Box(low=0,high=1,shape=(4,),dtype=np.float64) # 状态空间
         self.viewer = rendering.Viewer(self.edege_size+30,self.edege_size+30)
 
     def init_state(self):
@@ -52,7 +52,8 @@ class MyEnv(gym.Env):
         self.done = False
         self.reward =0
         self.index =0 #在self.loclist中的位置
-        return np.reshape(self.state,(-1,))
+        obs = self.get_observation()
+        return obs
 
     def _center_list(self):
         side = self.size
@@ -95,16 +96,33 @@ class MyEnv(gym.Env):
             self.state[x][y+1]=1
 
         _r = self._reward()
-        if _r == int((4**math.log(self.size,2)-1)/3):
-            _r =_r*2
         reward = _r-self.reward
         self.reward = _r
-        reward += -0.01
+        reward += -0.1
         self.index +=1
         if self.index>=len(self.loclist):
             self.done = True
-        return np.reshape(self.state,(-1,)),reward,self.done,{}
+        obs = self.get_observation()
+        if obs ==[1.0,1.0,1.0,1.0]:
+            reward +=5
+        return obs,reward,self.done,{}
 
+
+    def get_observation(self):
+
+        index =  0 if self.index ==0 else math.ceil((self.index)/4)
+        _side = int((self.size / 2) / (index + 1))
+        # 画正在覆盖的格子
+        if self.index == len(self.loclist):
+            (x,y) = self.loclist[self.index - 1]
+            _side+=1
+        else:
+            (x,y) = self.loclist[self.index]
+        obs=[np.sum(self.state[x-_side+1:x+1,y-_side+1:y+1]),
+             np.sum(self.state[x-_side+1:x+1,y+1:y+_side+1]),
+             np.sum(self.state[x+1:x+_side+1,y-_side+1:y+1]),
+             np.sum(self.state[x+1:x+_side+1,y+1:y+_side+1])]
+        return obs
 
     def _reward(self):
         """
@@ -112,8 +130,10 @@ class MyEnv(gym.Env):
         :return:
         """
         _re =0
+        count = 0
         for (x,y) in self.loclist:
             _re += int(np.sum(self.state[x:x+2,y:y+2])/4)
+            count +=1
         return _re
 
 
@@ -173,6 +193,7 @@ if __name__ == '__main__':
     while True:
         act = input("action:")
         obs,reward,dones,info = env.step(act)
+        print(obs)
         # print(reward,dones)
         env.render()
         if dones:

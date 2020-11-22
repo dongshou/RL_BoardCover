@@ -45,5 +45,5 @@ def test(size):
 
 
 if __name__ == '__main__':
-    # train(4)
+    train(4)
     test(4)
