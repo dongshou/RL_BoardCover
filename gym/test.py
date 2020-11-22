@@ -37,11 +37,13 @@ def test(size):
         # action = input("action:")
         obs, rewards, dones, info = env.step(action)
         env.render()
+        time.sleep(0.5)
         if dones:
             print(rewards,dones)
+            # time.sleep(3)
 
 
 
 if __name__ == '__main__':
-    train(4)
+    # train(4)
     test(4)

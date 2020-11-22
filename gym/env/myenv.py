@@ -23,7 +23,7 @@ class MyEnv(gym.Env):
         self.loc =[0,0]
         self.target = np.ones(shape=[self.size,self.size])
         # self.state = self.init_state()
-        self.action_space = spaces.Box(low=0,high=4.999,shape=(1,),dtype=np.float64)  # 动作空间,离散0：不动作，。。。。
+        self.action_space = spaces.Box(low=1,high=4.999,shape=(1,),dtype=np.float64)  # 动作空间,离散0：不动作，。。。。
         self.observation_space = spaces.Box(low=0,high=1,shape=(self.size*self.size,),dtype=np.float64) # 状态空间
         self.viewer = rendering.Viewer(self.edege_size+30,self.edege_size+30)
 
@@ -95,6 +95,8 @@ class MyEnv(gym.Env):
             self.state[x][y+1]=1
 
         _r = self._reward()
+        if _r == int((4**math.log(self.size,2)-1)/3):
+            _r =_r*2
         reward = _r-self.reward
         self.reward = _r
         reward += -0.01
