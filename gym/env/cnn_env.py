@@ -19,7 +19,7 @@ class MyEnv(gym.Env):
         self.edege_size = 512
         self.target = np.ones(shape=[self.size,self.size])
         # self.state = self.init_state()
-        self.action_space = spaces.Box(low=np.array([-1,-1,0]),high=np.array([1,1,4.99]),dtype=np.float64)  # 动作空间,离散0：不动作，。。。。
+        self.action_space = spaces.Box(low=np.array([-3,-3,0]),high=np.array([3,3,4.99]),dtype=np.float64)  # 动作空间,离散0：不动作，。。。。
         self.observation_space = spaces.Box(low=0,high=1,shape=(self.size,self.size,1),dtype=np.float64) # 状态空间
         self.viewer = rendering.Viewer(self.edege_size+30,self.edege_size+30)
 
@@ -59,9 +59,11 @@ class MyEnv(gym.Env):
         reward = 0
         x = self.loc[0]+int(action[0])
         y = self.loc[1]+int(action[1])
-        if x<self.size and x>0 and y<self.size and y>0:
+        print("(x,y):",(x,y))
+        if x<self.size and x>=0 and y<self.size and y>=0:
             self.loc = [x,y]
             act = int(action[2])
+            print("(x,y):", self.loc, "action:", act)
             reward = self.update(x,y,act)
         else:
             reward = -0.5
@@ -69,6 +71,7 @@ class MyEnv(gym.Env):
         if  (self.state==self.target).all():
             reward = 100
         # print("(x,y):",self.loc,"action:",act)
+        print("reward:",reward)
         return self.state,reward,self.done,{}
 
 
@@ -118,7 +121,7 @@ class MyEnv(gym.Env):
                 reward = -1
         elif action ==4:
             if x+1<self.size and y+1<self.size:
-                if  self.state[x][y][0]  ==0 and  self.state[x+1][y][0]  ==0 and  self.state[x][y+1][0]  ==0:
+                if  self.state[x][y][0]==0 and self.state[x+1][y][0]==0 and  self.state[x][y+1][0]==0:
                     self.state[x][y][0]  =1
                     self.state[x][y+1][0]  =1
                     self.state[x+1][y][0]  =1
@@ -175,5 +178,14 @@ class MyEnv(gym.Env):
             self.viewer.close()
 
 if __name__ == '__main__':
-    env = MyEnv(8)
+    env = MyEnv(4)
+    env.reset()
     env.render()
+    while True:
+        x = input("x:")
+        y = input("y:")
+        act = input("action:")
+        action = [int(x),int(y),int(act)]
+        print(action)
+        env.step(action)
+        env.render()

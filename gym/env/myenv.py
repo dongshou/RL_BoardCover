@@ -81,71 +81,44 @@ class MyEnv(gym.Env):
         """
         reward =0
         action =int(action[0])
-
         x,y = self.loc[0],self.loc[1]
         if self.state[x][y] ==0:
             obs =self.get_observation(x,y)  # 获取观测值
             if (obs[3] != 0 or obs[1] != 0) and (obs[1] != 0 or obs[4] != 0) and (obs[3] != 0 or obs[6] != 0) and (
                     obs[4] != 0 or obs[6] != 0):
                 self.update_loc()
-                reward = -0.2
             elif action ==0:
                 self.update_loc()
-                reward =-0.5
             elif action ==1:
                 if obs[1] ==0 and obs[3] ==0:
                     self.state[x][y] =1
                     self.state[x-1][y] = 1
                     self.state[x][y-1] = 1
                     self.update_loc()
-                    reward = 1
-                else:
-                    reward = -0.8
             elif action ==2:
                 if obs[1]==0 and obs[4] ==0:
                     self.state[x][y] = 1
                     self.state[x-1][y] = 1
                     self.state[x][y+1] = 1
                     self.update_loc()
-                    reward = 1
-                else:
-                    reward = -0.8
             elif action ==3:
                 if obs[3]==0 and obs[6]==0:
                     self.state[x][y] = 1
                     self.state[x][y-1] = 1
                     self.state[x+1][y] = 1
                     self.update_loc()
-                    reward = 1
-                else:
-                    reward = -0.8
             elif action ==4 :
                 if obs[4] ==0 and obs[6] ==0:
                     self.state[x][y] = 1
                     self.state[x][y+1] = 1
                     self.state[x+1][y] = 1
                     self.update_loc()
-                    reward = 1
-                else:
-                    reward=-0.8
         elif self.state[x][y] !=0:
-            if action == 0:
-                reward = 0.5
-            else:
-                reward =-0.8
             self.update_loc()
-        # if (self.state==self.target).all():
-        #     self.done = True
-        #     reward = 100
-        # if self.done and not (self.state==self.target).all():
-        #     reward = -1
-        # obs = self.get_observation(self.loc[0],self.loc[1])
         _r = self._reward()
         reward = _r-self.reward
         self.reward = _r
         reward += -0.01
-        # print("action:",action,"(x,y):",self.loc,"done:",self.done,"reward:",reward)
-
         return np.reshape(self.state,(-1,)),reward,self.done,{}
 
     def update_loc(self):
@@ -164,15 +137,25 @@ class MyEnv(gym.Env):
         通过self.state与E(2)的点乘实现卷积操作，从而实现reward的计算，stride=[1,2,2,1],padding = VALID
         :return:
         """
-        reward = np.zeros(shape = (int(self.size/2),int(self.size/2)))
+        reward_2 = np.zeros(shape = (int(self.size/2),int(self.size/2)))
         i,j =0,0
         while i<self.size:
             j=0
             while j<self.size:
-                reward[int(i/2)][int(j/2)] = math.floor(np.sum(self.state[i:i+2,j:j+2])/4)
+                reward_2[int(i/2)][int(j/2)] = math.floor(np.sum(self.state[i:i+2,j:j+2])/4)
                 j+=2
             i+=2
-        _reward = int(np.sum(reward))
+        _reward = int(np.sum(reward_2))
+        if self.size>=4:
+            reward_4 = np.zeros(shape=(int(self.size / 4), int(self.size / 4)))
+            i, j = 0, 0
+            while i < self.size:
+                j = 0
+                while j < self.size:
+                    reward_4[int(i / 4)][int(j / 4)] = math.floor(np.sum(self.state[i:i + 4, j:j + 4]) / 16)
+                    j += 4
+                i += 4
+            _reward += int(np.sum(reward_4))*1.1
         return _reward
 
 

@@ -20,7 +20,7 @@ def train(size):
     #
     model = DDPG(CnnPolicy, env, verbose=1, param_noise=param_noise, action_noise=action_noise)
     #
-    model.learn(total_timesteps=10000)
+    model.learn(total_timesteps=1000)
     model.save("ddpg_mountain_{}_cnn".format(size))
     env.close()
     del env
