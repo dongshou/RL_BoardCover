@@ -98,13 +98,13 @@ class MyEnv(gym.Env):
         _r = self._reward()
         reward = _r-self.reward
         self.reward = _r
-        reward += -0.1
+        reward += -0.01
         self.index +=1
         if self.index>=len(self.loclist):
             self.done = True
         obs = self.get_observation()
         if obs ==[1.0,1.0,1.0,1.0]:
-            reward +=5
+            reward+=1
         return obs,reward,self.done,{}
 
 
@@ -189,11 +189,10 @@ if __name__ == '__main__':
     env = MyEnv(4)
     env.reset()
     env.render()
-    print(env.loclist)
     while True:
         act = input("action:")
         obs,reward,dones,info = env.step(act)
-        print(obs)
+        print(reward)
         # print(reward,dones)
         env.render()
         if dones:
