@@ -26,13 +26,21 @@ class MyEnv(gym.Env):
         self.action_space = spaces.Box(low=0,high=4.999,shape=(1,),dtype=np.float64)  # 动作空间,离散0：不动作，。。。。
         self.observation_space = spaces.Box(low=0,high=1,shape=(self.size*self.size,),dtype=np.float64) # 状态空间
         self.viewer = rendering.Viewer(self.edege_size+30,self.edege_size+30)
-        self.reward = 0
 
     def init_state(self):
-        state = np.zeros(shape=(self.size,self.size))
+        state = np.zeros(shape=[self.size,self.size])
         x,y = random.randint(0,self.size-1),random.randint(0,self.size-1)
         state[x][y] = 1
         return state
+
+    def _center(self,start,side):
+        """
+        开始的坐标，以及边长side
+        :param start:
+        :param side:
+        :return: 中心2*2的坐标
+        """
+        return (start[0]+int(side/2)-1,start[1]+int(side/2)-1)
 
     def reset(self):
         """
@@ -40,37 +48,24 @@ class MyEnv(gym.Env):
         :return:
         """
         self.state = self.init_state()
-        self.loc=[0,0]
+        self._center_list()  #获取一个位置列表[location1,location2,...]
         self.done = False
-        obs = self.get_observation()
+        self.reward =0
+        self.index =0 #在self.loclist中的位置
         return np.reshape(self.state,(-1,))
 
-    def get_observation(self,x=0,y=0):
-        """
-        返回周围8个点的状态
-        :param x:
-        :param y:
-        :return:
-        """
-        obs =[-1]*8
-        if x-1>=0 and y-1>=0:
-            obs[0] = self.state[x-1][y-1]
-            obs[1] = self.state[x-1][y]
-            obs[3] = self.state[x][y-1]
-        if x-1 >=0 and y+1<self.size:
-            obs[1] = self.state[x-1][y]
-            obs[2] = self.state[x-1][y+1]
-            obs[4] = self.state[x][y+1]
-        if x+1<self.size and y-1>=0:
-            obs[3] = self.state[x][y-1]
-            obs[5] = self.state[x+1][y-1]
-            obs[6] = self.state[x+1][y]
-        if x+1<self.size and y+1<self.size:
-            obs[4] = self.state[x][y+1]
-            obs[6] = self.state[x+1][y]
-            obs[7] = self.state[x+1][y+1]
-
-        return obs
+    def _center_list(self):
+        side = self.size
+        self.loclist = []
+        while side>=2:
+            i = 0
+            while i<self.size:
+                j = 0
+                while j<self.size:
+                    self.loclist.append(self._center((i,j),side))
+                    j+=side
+                i+=side
+            side = int(side/2)
 
 
     def step(self,action):
@@ -81,82 +76,43 @@ class MyEnv(gym.Env):
         """
         reward =0
         action =int(action[0])
-        x,y = self.loc[0],self.loc[1]
-        if self.state[x][y] ==0:
-            obs =self.get_observation(x,y)  # 获取观测值
-            if (obs[3] != 0 or obs[1] != 0) and (obs[1] != 0 or obs[4] != 0) and (obs[3] != 0 or obs[6] != 0) and (
-                    obs[4] != 0 or obs[6] != 0):
-                self.update_loc()
-            elif action ==0:
-                self.update_loc()
-            elif action ==1:
-                if obs[1] ==0 and obs[3] ==0:
-                    self.state[x][y] =1
-                    self.state[x-1][y] = 1
-                    self.state[x][y-1] = 1
-                    self.update_loc()
-            elif action ==2:
-                if obs[1]==0 and obs[4] ==0:
-                    self.state[x][y] = 1
-                    self.state[x-1][y] = 1
-                    self.state[x][y+1] = 1
-                    self.update_loc()
-            elif action ==3:
-                if obs[3]==0 and obs[6]==0:
-                    self.state[x][y] = 1
-                    self.state[x][y-1] = 1
-                    self.state[x+1][y] = 1
-                    self.update_loc()
-            elif action ==4 :
-                if obs[4] ==0 and obs[6] ==0:
-                    self.state[x][y] = 1
-                    self.state[x][y+1] = 1
-                    self.state[x+1][y] = 1
-                    self.update_loc()
-        elif self.state[x][y] !=0:
-            self.update_loc()
+        (x,y) = self.loclist[self.index]
+        if action ==1 and self.state[x+1][y] ==0 and self.state[x][y+1] ==0 and self.state[x+1][y+1]==0:
+            self.state[x+1][y]=1
+            self.state[x][y+1] =1
+            self.state[x+1][y+1] =1
+        elif action ==2 and self.state[x][y] ==0 and self.state[x+1][y] ==0 and self.state[x+1][y+1] ==0:
+            self.state[x][y]=1
+            self.state[x+1][y]=1
+            self.state[x+1][y+1] =1
+        elif action ==3 and self.state[x][y] ==0 and self.state[x][y+1]==0 and self.state[x+1][y+1]==0:
+            self.state[x][y]=1
+            self.state[x][y+1] =1
+            self.state[x+1][y+1] =1
+        elif action ==4 and self.state[x][y]==0 and self.state[x][y+1]==0 and self.state[x+1][y]==0:
+            self.state[x][y]=1
+            self.state[x+1][y]=1
+            self.state[x][y+1]=1
+
         _r = self._reward()
         reward = _r-self.reward
         self.reward = _r
         reward += -0.01
+        self.index +=1
+        if self.index>=len(self.loclist):
+            self.done = True
         return np.reshape(self.state,(-1,)),reward,self.done,{}
 
-    def update_loc(self):
-        f = (self.loc[1]+1)%self.size
-        if f==0:
-            if (self.loc[0]+1)%self.size ==0:
-                self.done = True
-            else:
-                self.loc[0]+=1
-                self.loc[1] = 0
-        else:
-            self.loc[1] +=1
 
     def _reward(self):
         """
         通过self.state与E(2)的点乘实现卷积操作，从而实现reward的计算，stride=[1,2,2,1],padding = VALID
         :return:
         """
-        reward_2 = np.zeros(shape = (int(self.size/2),int(self.size/2)))
-        i,j =0,0
-        while i<self.size:
-            j=0
-            while j<self.size:
-                reward_2[int(i/2)][int(j/2)] = math.floor(np.sum(self.state[i:i+2,j:j+2])/4)
-                j+=2
-            i+=2
-        _reward = int(np.sum(reward_2))
-        if self.size>=4:
-            reward_4 = np.zeros(shape=(int(self.size / 4), int(self.size / 4)))
-            i, j = 0, 0
-            while i < self.size:
-                j = 0
-                while j < self.size:
-                    reward_4[int(i / 4)][int(j / 4)] = math.floor(np.sum(self.state[i:i + 4, j:j + 4]) / 16)
-                    j += 4
-                i += 4
-            _reward += int(np.sum(reward_4))*1.1
-        return _reward
+        _re =0
+        for (x,y) in self.loclist:
+            _re += int(np.sum(self.state[x:x+2,y:y+2])/4)
+        return _re
 
 
     def render(self,mode="human",close=False):
@@ -167,6 +123,7 @@ class MyEnv(gym.Env):
         :return:
         """
         w = self.edege_size/self.size
+        # 画格子
         for i in range(self.size+1):
             if i%2==0:
                 c = (1,0,0)
@@ -179,6 +136,8 @@ class MyEnv(gym.Env):
             else:
                 c = (0,0,0)
             self.viewer.draw_line((15+j*w,15),(15+j*w,15+self.edege_size),color = c)
+
+        # 画已经覆盖的格子
         for i in range(self.size):
             for j in range(self.size):
                 if self.state[i][j] == 1:
@@ -186,13 +145,17 @@ class MyEnv(gym.Env):
                                               (15+(j+1)*w-2,15+self.edege_size-i*w-2),
                                               (15+(j+1)*w-2,15+self.edege_size-(i+1)*w+1),
                                               (15 + j* w+1, 15 +self.edege_size-(i+1) * w+1)])
-        i,j = self.loc[0],self.loc[1]
+        # 画正在覆盖的格子
+        if self.index ==len(self.loclist):
+            (i,j) = self.loclist[self.index-1]
+        else:
+            (i,j) = self.loclist[self.index]
         self.viewer.draw_polygon([(15 + j * w , 15 + self.edege_size - i * w),
-                                  (15 + (j + 1) * w, 15 + self.edege_size - i * w),
-                                  (15 + (j + 1) * w, 15 + self.edege_size - (i + 1) * w),
-                                  (15 + j * w, 15 + self.edege_size - (i + 1) * w)],
+                                  (15 + (j + 2) * w, 15 + self.edege_size - i * w),
+                                  (15 + (j + 2) * w, 15 + self.edege_size - (i + 2) * w),
+                                  (15 + j * w, 15 + self.edege_size - (i + 2) * w)],
                                  filled=False,
-                                 color = (0,0,0.5),
+                                 color = (1,0,0),
                                  linewidth = 5)
         return self.viewer.render(return_rgb_array=mode == 'human')
 
@@ -201,14 +164,14 @@ class MyEnv(gym.Env):
             self.viewer.close()
 
 if __name__ == '__main__':
-    env = MyEnv(8)
+    env = MyEnv(4)
     env.reset()
     env.render()
+    print(env.loclist)
     while True:
         act = input("action:")
         obs,reward,dones,info = env.step(act)
-        env._reward()
-        print(reward,dones)
+        # print(reward,dones)
         env.render()
         if dones:
             env.reset()
