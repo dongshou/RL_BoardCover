@@ -18,7 +18,7 @@ def train(size):
     env = DummyVecEnv([lambda: env1])
     # the noise objects for DDPG
     model = PPO2(MlpPolicy, env, verbose=1, tensorboard_log='./log')
-    model.learn(total_timesteps=int(1e5))
+    model.learn(total_timesteps=int(1e7))
     model.save("ddpg_mountain_{}".format(size))
     env.close()
     del model

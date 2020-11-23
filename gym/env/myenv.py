@@ -77,6 +77,7 @@ class MyEnv(gym.Env):
         """
         reward =0
         action =int(action[0])
+        _obs = self.get_observation()
         (x,y) = self.loclist[self.index]
         if action ==1 and self.state[x+1][y] ==0 and self.state[x][y+1] ==0 and self.state[x+1][y+1]==0:
             self.state[x+1][y]=1
@@ -95,10 +96,12 @@ class MyEnv(gym.Env):
             self.state[x+1][y]=1
             self.state[x][y+1]=1
 
-        _r = self._reward()
-        reward = _r-self.reward
+
+        _r = self._reward(_obs,action)
+        reward = _r
         self.reward = _r
-        reward += -0.01
+        reward += -0.1
+
         self.index +=1
         if self.index>=len(self.loclist):
             self.done = True
@@ -124,16 +127,18 @@ class MyEnv(gym.Env):
              np.sum(self.state[x+1:x+_side+1,y+1:y+_side+1])]
         return obs
 
-    def _reward(self):
+    def _reward(self,obs,action):
         """
         通过self.state与E(2)的点乘实现卷积操作，从而实现reward的计算，stride=[1,2,2,1],padding = VALID
         :return:
         """
         _re =0
-        count = 0
-        for (x,y) in self.loclist:
-            _re += int(np.sum(self.state[x:x+2,y:y+2])/4)
-            count +=1
+        if obs ==[1.0,1.0,1.0,1.0]:
+            _re = 2
+        else:
+            for index ,value in enumerate(obs):
+                if value ==1 and index ==action-1:
+                    _re = 1
         return _re
 
 
@@ -192,8 +197,8 @@ if __name__ == '__main__':
     while True:
         act = input("action:")
         obs,reward,dones,info = env.step(act)
-        print(reward)
-        # print(reward,dones)
+        # print(reward)
+        print(reward,dones)
         env.render()
         if dones:
             env.reset()
