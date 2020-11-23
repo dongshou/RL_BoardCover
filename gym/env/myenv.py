@@ -99,7 +99,7 @@ class MyEnv(gym.Env):
             _r =_r*2
         reward = _r-self.reward
         self.reward = _r
-        reward += -0.01
+        reward += -0.1
         self.index +=1
         if self.index>=len(self.loclist):
             self.done = True
