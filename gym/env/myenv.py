@@ -23,9 +23,10 @@ class MyEnv(gym.Env):
         self.loc =[0,0]
         self.target = np.ones(shape=[self.size,self.size])
         # self.state = self.init_state()
-        self.action_space = spaces.Box(low=1,high=4.999,shape=(1,),dtype=np.float64)  # 动作空间,离散0：不动作，。。。。
-        self.observation_space = spaces.Box(low=0,high=1,shape=(4,),dtype=np.float64) # 状态空间
+        self.action_space = spaces.Box(low = 1,high=4.999,shape = (1,),dtype=float)  # 动作空间,离散0：不动作，。。。。
+        self.observation_space = spaces.Box(low=0,high = 1,shape=(self.size*self.size,),dtype=float) # 状态空间
         self.viewer = rendering.Viewer(self.edege_size+30,self.edege_size+30)
+        self.terminal = "playing"
 
     def init_state(self):
         state = np.zeros(shape=[self.size,self.size])
@@ -52,8 +53,8 @@ class MyEnv(gym.Env):
         self.done = False
         self.reward =0
         self.index =0 #在self.loclist中的位置
-        obs = self.get_observation()
-        return obs
+        # obs = self.get_observation()
+        return np.reshape(self.state,(-1,))
 
     def _center_list(self):
         side = self.size
@@ -69,14 +70,21 @@ class MyEnv(gym.Env):
             side = int(side/2)
 
 
+    def _index(self,obs,action):
+        s =-1
+        for index,value in enumerate(obs):
+            if value == 1 and index == action - 1:
+                s = index
+        return s
+
+
     def step(self,action):
         """
         推进一个时间步长，返回observation，reward，done，info
         :param action:
         :return:
         """
-        reward =0
-        action =int(action[0])
+        action = int(action[0])
         _obs = self.get_observation()
         (x,y) = self.loclist[self.index]
         if action ==1 and self.state[x+1][y] ==0 and self.state[x][y+1] ==0 and self.state[x+1][y+1]==0:
@@ -96,19 +104,15 @@ class MyEnv(gym.Env):
             self.state[x+1][y]=1
             self.state[x][y+1]=1
 
-
-        _r = self._reward(_obs,action)
-        reward = _r
-        self.reward = _r
-        reward += -0.1
-
+        reward= self._reward(_obs,action)
         self.index +=1
         if self.index>=len(self.loclist):
             self.done = True
-        obs = self.get_observation()
-        if obs ==[1.0,1.0,1.0,1.0]:
+        # obs = self.get_observation()
+        if (self.state==self.target).all():
+            self.target ="SUCESS"
             reward+=1
-        return obs,reward,self.done,{}
+        return np.reshape(self.state,newshape=(-1,)),reward,self.done,{}
 
 
     def get_observation(self):
@@ -125,6 +129,7 @@ class MyEnv(gym.Env):
              np.sum(self.state[x-_side+1:x+1,y+1:y+_side+1]),
              np.sum(self.state[x+1:x+_side+1,y-_side+1:y+1]),
              np.sum(self.state[x+1:x+_side+1,y+1:y+_side+1])]
+
         return obs
 
     def _reward(self,obs,action):
@@ -132,13 +137,13 @@ class MyEnv(gym.Env):
         通过self.state与E(2)的点乘实现卷积操作，从而实现reward的计算，stride=[1,2,2,1],padding = VALID
         :return:
         """
-        _re =0
+        _re =-0.1
         if obs ==[1.0,1.0,1.0,1.0]:
-            _re = 2
+            _re += 1
         else:
             for index ,value in enumerate(obs):
                 if value ==1 and index ==action-1:
-                    _re = 1
+                    _re += 1
         return _re
 
 
@@ -149,6 +154,7 @@ class MyEnv(gym.Env):
         :param close:
         :return:
         """
+        print(self.terminal)
         w = self.edege_size/self.size
         # 画格子
         for i in range(self.size+1):
@@ -195,8 +201,9 @@ if __name__ == '__main__':
     env.reset()
     env.render()
     while True:
-        act = input("action:")
+        act = int(input("action:"))
         obs,reward,dones,info = env.step(act)
+        print(obs,reward,dones)
         # print(reward)
         print(reward,dones)
         env.render()
