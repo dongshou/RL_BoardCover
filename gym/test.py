@@ -1,11 +1,8 @@
 import time
-
 from gym.wrappers import Monitor
-import gym
 
-from stable_baselines.common.policies import MlpPolicy
-from stable_baselines.common import make_vec_env
-from stable_baselines import PPO2
+from stable_baselines.deepq.policies import MlpPolicy
+from stable_baselines import DQN
 from stable_baselines.common.vec_env import DummyVecEnv
 
 
@@ -17,9 +14,9 @@ def train(size):
     env1 = Monitor(MyEnv(size), log, force=True)
     env = DummyVecEnv([lambda: env1])
     # the noise objects for DDPG
-    model = PPO2(MlpPolicy, env, verbose=1, tensorboard_log='./log')
+    model = DQN(MlpPolicy, env, verbose=1, tensorboard_log='./log')
     model.learn(total_timesteps=int(5*1e4))
-    model.save("ddpg_mountain_{}".format(size))
+    model.save("dqn_mountain_{}".format(size))
     env.close()
     del model
     del env
@@ -29,7 +26,7 @@ def test(size):
     env2 = Monitor(MyEnv(size), log, force=True)
     env = DummyVecEnv([lambda: env2])
     print('test')
-    model = PPO2.load("ddpg_mountain_{}".format(size))
+    model = DQN.load("dqn_mountain_{}".format(4))
     obs = env.reset()
     env.render()
     while True:
@@ -43,5 +40,5 @@ def test(size):
 
 
 if __name__ == '__main__':
-    train(4)
-    test(4)
+    train(8)
+    test(8)

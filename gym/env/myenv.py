@@ -21,10 +21,10 @@ class MyEnv(gym.Env):
         self.size = size  #棋盘大小
         self.edege_size = 512
         self.loc =[0,0]
-        self.target = np.ones(shape=[self.size,self.size])
+
         # self.state = self.init_state()
-        self.action_space = spaces.Box(low = 1,high=4.999,shape = (1,),dtype=float)  # 动作空间,离散0：不动作，。。。。
-        self.observation_space = spaces.Box(low=0,high = 1,shape=(self.size*self.size,),dtype=float) # 状态空间
+        self.action_space = spaces.Discrete(4)  # 动作空间,离散0：不动作，。。。。
+        self.observation_space = spaces.Discrete(5) # 状态空间
         self.viewer = rendering.Viewer(self.edege_size+30,self.edege_size+30)
         self.terminal = "playing"
 
@@ -49,12 +49,13 @@ class MyEnv(gym.Env):
         :return:
         """
         self.state = self.init_state()
+        self.target = np.ones(shape=[self.size, self.size])
         self._center_list()  #获取一个位置列表[location1,location2,...]
         self.done = False
         self.reward =0
         self.index =0 #在self.loclist中的位置
-        # obs = self.get_observation()
-        return np.reshape(self.state,(-1,))
+        obs = self.get_observation()
+        return obs.index(np.max(obs))
 
     def _center_list(self):
         side = self.size
@@ -84,7 +85,8 @@ class MyEnv(gym.Env):
         :param action:
         :return:
         """
-        action = int(action[0])
+        # action = int(action[0])
+        action =action+1
         _obs = self.get_observation()
         (x,y) = self.loclist[self.index]
         if action ==1 and self.state[x+1][y] ==0 and self.state[x][y+1] ==0 and self.state[x+1][y+1]==0:
@@ -108,11 +110,13 @@ class MyEnv(gym.Env):
         self.index +=1
         if self.index>=len(self.loclist):
             self.done = True
-        # obs = self.get_observation()
+        obs = self.get_observation()
+        state = obs.index(np.max(obs))
         if (self.state==self.target).all():
             self.target ="SUCESS"
             reward+=1
-        return np.reshape(self.state,newshape=(-1,)),reward,self.done,{}
+            state = 5
+        return state,reward,self.done,{}
 
 
     def get_observation(self):
@@ -137,7 +141,7 @@ class MyEnv(gym.Env):
         通过self.state与E(2)的点乘实现卷积操作，从而实现reward的计算，stride=[1,2,2,1],padding = VALID
         :return:
         """
-        _re =-0.1
+        _re =-1
         if obs ==[1.0,1.0,1.0,1.0]:
             _re += 1
         else:
