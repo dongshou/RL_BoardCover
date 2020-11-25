@@ -19,7 +19,7 @@ class MyEnv(gym.Env):
     def __init__(self,size):
         super(MyEnv,self).__init__()
         self.size = size  #棋盘大小
-        self.edege_size = 512
+        self.edege_size = 768
         self.loc =[0,0]
 
         # self.state = self.init_state()
@@ -114,15 +114,15 @@ class MyEnv(gym.Env):
         state = obs.index(np.max(obs))
         if (self.state==self.target).all():
             self.target ="SUCESS"
-            reward+=1
+            reward+= len(self.loclist)
             state = 5
         return state,reward,self.done,{}
 
 
     def get_observation(self):
 
-        index =  0 if self.index ==0 else math.ceil((self.index)/4)
-        _side = int((self.size / 2) / (index + 1))
+        _index = math.floor(math.log(3*self.index+4,4)-(1e-7))
+        _side = int((self.size / 2) / 2**_index)
         # 画正在覆盖的格子
         if self.index == len(self.loclist):
             (x,y) = self.loclist[self.index - 1]
@@ -142,12 +142,10 @@ class MyEnv(gym.Env):
         :return:
         """
         _re =-1
-        if obs ==[1.0,1.0,1.0,1.0]:
-            _re += 1
-        else:
-            for index ,value in enumerate(obs):
-                if value ==1 and index ==action-1:
-                    _re += 1
+        print(obs,action)
+        for index ,value in enumerate(obs):
+            if value ==1 and index ==action-1:
+                _re += 1
         return _re
 
 
@@ -201,15 +199,15 @@ class MyEnv(gym.Env):
             self.viewer.close()
 
 if __name__ == '__main__':
-    env = MyEnv(4)
+    env = MyEnv(8)
+
     env.reset()
     env.render()
+    print(env.loclist)
     while True:
         act = int(input("action:"))
         obs,reward,dones,info = env.step(act)
-        print(obs,reward,dones)
         # print(reward)
-        print(reward,dones)
         env.render()
         if dones:
             env.reset()

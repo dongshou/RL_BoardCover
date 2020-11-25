@@ -15,7 +15,7 @@ def train(size):
     env = DummyVecEnv([lambda: env1])
     # the noise objects for DDPG
     model = DQN(MlpPolicy, env, verbose=1, tensorboard_log='./log')
-    model.learn(total_timesteps=int(5*1e4))
+    model.learn(total_timesteps=int(1e7))
     model.save("dqn_mountain_{}".format(size))
     env.close()
     del model
@@ -26,19 +26,16 @@ def test(size):
     env2 = Monitor(MyEnv(size), log, force=True)
     env = DummyVecEnv([lambda: env2])
     print('test')
-    model = DQN.load("dqn_mountain_{}".format(4))
+    model = DQN.load("dqn_mountain_{}".format(8))
     obs = env.reset()
     env.render()
     while True:
         action, _states = model.predict(obs)
-        print("action:",action)
-        # action = input("action:")
         obs, rewards, dones, info = env.step(action)
         env.render()
-        time.sleep(0.5)
 
 
 
 if __name__ == '__main__':
-    train(8)
-    test(8)
+    # train(8)
+    test(128)
