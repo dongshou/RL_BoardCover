@@ -1,0 +1,4 @@
+残缺棋盘覆盖文件夹内包含好几个git版本，前几个版本的文件待gym文件夹内，后几个版本在gym_文件夹内
+这个文件夹很乱，处理了几个版本的文件在qipan_cover文件内，内容不全，
+在 https://github.com/Dsohno/RL_BoardCover上有比较干净的版本（没有ui界面）
+程序运行方法：python run app.py
